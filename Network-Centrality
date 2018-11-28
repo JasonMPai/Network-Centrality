@@ -1,0 +1,66 @@
+
+Library and import data
+```{R}
+library(readr)
+library(igraph)
+library(ggplot2)
+
+TwiSub <- read.graph("twitter_graph_subset.txt", format = "ncol", directed = TRUE)
+TwiCom <- read.graph("twitter_graph_complete.txt", format = "ncol", directed = TRUE)
+
+```
+
+
+Alpha centrality is implemented in igraph library for network analysis and visualization
+
+```{R}
+plot(TwiSub, edge.arrow.size=3,vertex.size = 6, vertex.label = NA)
+```
+Alpha Centrality
+Alpha centrality is a measure of centrality of nodes. Improving upon eigenvector centrality with the addition that nodes, alpha centrality adds external data sources into the graph.  
+
+```{R}
+AlpCen = alpha_centrality(TwiSub, nodes = V(TwiSub))
+
+for (i in c("0", "1", "2", "3", "940", "1147", "48526", "6497", "18719", "52513")) {
+    print(paste("Aplha Centrality", i, ":", AlpCen[i]))}
+```
+
+Page Rank
+PageRank producess the product of the quantity and quality of the network to a page to define the importance of the website. The values are given below:
+```{R}
+PageRank = page.rank(TwiCom)$vector
+
+for (i in c("0", "1", "2", "3", "940", "1147", "48526", "6497", "18719", "52513")) {
+    print(paste("Page Rank ", i, ":", PageRank[i]))
+}
+```
+
+In-Degree
+In Degree is represented by the number of edges incoming to a vertex. 
+```{R}
+InDeg = degree(TwiCom, v = V(TwiCom), mode = "in")
+
+for (i in c("0", "1", "2", "3", "940", "1147", "48526", "6497", "18719", "52513")) {
+    print(paste("In-Degree ", i, ":", InDeg[i]))
+}
+```
+
+Defining the In-Degree axis (X) and the Page Rank (Y) axis
+- From trial and error, we will utilize log scale to make the chart more informative
+```{R}
+
+InDeg[c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]
+PageRank[c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)]
+
+DataFrame1 = data.frame(InDeg, PageRank)
+DataFrame1$log_PageRank = log(DataFrame1$PageRank)
+DataFrame1$log_InDeg = log(DataFrame1$InDeg)
+
+graph1 = ggplot(DataFrame1, aes(x = log_InDeg, y = log_PageRank)) + geom_point(colour = "grey") + stat_smooth(color = "black")
+graph1 + ggtitle("Twitter: In-degree vs Page Rank") + ylab("Log(Page Rank)") + 
+    xlab("Log(In-Degree)")
+```
+
+Observation:
+From the chart above measuring the log of bothe the Page Rank vs the In Degree, we see a positive correlation between the two variables. In theory, nodes with In-Degree higher than zero should all have a higher Page Rank than nodes with In-Degree equal to zero.  As In-Degree increases, Page Rank increases (trend line shown in Red line). Within the dataset, we can see that there are pockets of higher In-Degree.  Accordingly, these nodes have a corresponding value of high Page Rank values, as well.
